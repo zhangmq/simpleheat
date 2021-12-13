@@ -95,7 +95,11 @@ simpleheat.prototype = {
         return this;
     },
 
-    draw: function (minOpacity) {
+    getGradient: function() {
+        return this._grad;
+    },
+
+    draw: function (minOpacity, maxColorIndex) {
         if (!this._circle) this.radius(this.defaultRadius);
         if (!this._grad) this.gradient(this.defaultGradient);
 
@@ -112,17 +116,24 @@ simpleheat.prototype = {
 
         // colorize the heatmap, using opacity value of each pixel to get the right color from our gradient
         var colored = ctx.getImageData(0, 0, this._width, this._height);
-        this._colorize(colored.data, this._grad);
+        this._colorize(colored.data, this._grad, maxColorIndex);
         ctx.putImageData(colored, 0, 0);
 
         return this;
     },
 
-    _colorize: function (pixels, gradient) {
+    _colorize: function (pixels, gradient, maxColorIndex) {
         for (var i = 0, len = pixels.length, j; i < len; i += 4) {
             j = pixels[i + 3] * 4; // get gradient color from opacity value
 
             if (j) {
+                if (j > maxColorIndex) {
+                    pixels[i] = gradient[maxColorIndex]
+                    pixels[i + 1] = gradient[maxColorIndex + 1]
+                    pixels[i + 2] = gradient[maxColorIndex + 2]
+                    return
+                }
+                
                 pixels[i] = gradient[j];
                 pixels[i + 1] = gradient[j + 1];
                 pixels[i + 2] = gradient[j + 2];
